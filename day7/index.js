@@ -1,6 +1,8 @@
 async function main() {
-    const data = await getData('input_test.txt');
-    // const data = await getData('input.txt');
+    // const data = await getData('input_test.txt');
+    const data = await getData('input.txt');
+    // const data = await getData('input_custom.txt');
+
 
     console.log(data);
     // parse
@@ -15,13 +17,11 @@ async function main() {
         }
     });
 
-    console.log('Parsed: ', parsed);
+    //console.log('Parsed: ', parsed);
 
-
-
-    for (let [index, eq] of parsed.entries()) {        
+    for (let [index, eq] of parsed.entries()) {
         findOperators(eq);
-        console.log(`Expression (${index}/${parsed.length}): ${eq.og} => %c${eq.isValid}`, `color:${eq.isValid ? 'lime' : 'red'}`);
+        console.log(`Expression (${index+1}/${parsed.length}) : ${eq.og} => %c${eq.isValid}`, `color:${eq.isValid ? 'lime' : 'red'}`);
     }
 
     let valid = parsed.filter( e => e.isValid);
@@ -31,9 +31,11 @@ async function main() {
 }
 
 function findOperators(eq) {
-    const ops = generateOperandCombinations(eq.values.length - 1);
 
-    let comb = [];
+    const ops = generateOperandCombinations(eq.values.length - 1);
+    
+    // its gets really slow for very large number of values in the equation
+    let comb = []; // array con espressione completa di operatori
     for (let op of ops) {
         comb = [];
         for (let i = 0; i < eq.values.length; i++) {
@@ -43,7 +45,7 @@ function findOperators(eq) {
             }
         }
         let expr = comb;
-        let res = evalExpr(expr);
+        let res = evalExpr(expr, eq.res);
         if (res == eq.res) {
             eq.isValid = true;
             return;
@@ -51,7 +53,7 @@ function findOperators(eq) {
     }
 }
 
-function evalExpr(expr){
+function evalExpr(expr, exp_res){
     // evaluate expr left to right
     let op = null;
     let res = null;
@@ -66,12 +68,21 @@ function evalExpr(expr){
                     res = Number(res.toString().concat(i));
                 } else {
                     // devo eseguire un'operazione
-                    res = eval(res + op + i)
+                    //res = eval(res + op + i)
+                    if(op == '+'){
+                        res += i;
+                    } else if(op == '*'){
+                        res *= i;
+                    }
                 }
             } else {
                 // nessuna operazione = primo numero
                 res = i;
             }
+        }
+        // exit if larger than expected
+        if(res > exp_res){
+            return res;
         }
     }
     return res;
