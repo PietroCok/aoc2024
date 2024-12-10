@@ -1,11 +1,13 @@
+import {Canvas} from './canvas.js'
+
+let canvas;
+const disk = [];
+let run = false;
 async function main() {
     // const data = await getData('input_test.txt');
     const data = await getData('input.txt');
 
     // console.log(data);
-
-    const disk = [];
-
     let id = 0;
     for (let [index, char] of data.split('').entries()) {
         if (index % 2 == 0) {
@@ -18,16 +20,40 @@ async function main() {
 
     console.log('Starting disk allocation: ', disk.join(''));
 
+    canvas = new Canvas(disk);
+
+    // automatic start
+    // start(disk)
+    document.querySelector('#start_script').onclick = start;
+    document.querySelector('#stop_script').onclick = stop;
+}
+
+async function start(){
+    document.querySelector('#stop_script').disabled = false;
+    document.querySelector('#start_script').disabled = true;
+    document.querySelector('.running-status').classList.remove('completed');
+    document.querySelector('.running-status').classList.add('running');
     // part 1 solution
     // compactDisk(disk);
 
     // part 2 solution
-    compactWholeFiles(disk);
+    run = true;
+    await compactWholeFiles(disk);
     console.log("Compressed disk: ", disk, disk.join(''));
+    canvas.drawAll();
 
     let checksum = getCheckSum(disk);
     console.log('disk checksum: ', checksum);
 
+    document.querySelector('.running-status').classList.remove('running');
+    document.querySelector('.running-status').classList.add('completed');
+    document.querySelector('#start_script').disabled = false;
+    document.querySelector('#stop_script').disabled = true;
+
+}
+
+function stop(){
+    run = false;
 }
 
 function addToDisk(disk, value, n) {
@@ -54,7 +80,7 @@ function compactDisk(disk) {
     console.log("Compressed disk: ", disk.join(''));
 }
 
-function compactWholeFiles(disk, fileId = null) {
+async function compactWholeFiles(disk, fileId = null) {
 
     while (fileId >= 0) {
         // use fileId to identify the file to check for
@@ -82,12 +108,20 @@ function compactWholeFiles(disk, fileId = null) {
         if (firstFree.length > 0) {
             write(disk, firstFree[0], firstFree[0] + fileLength - 1, fileId);
             write(disk, file[1], file[0], '.');
-            console.log(`FileId: ${fileId} moved from index ${file[1]} to index ${firstFree[0]}`);            
+            console.log(`FileId: ${fileId} moved from index ${file[1]} to index ${firstFree[0]}`);
+            canvas.update(file[1], firstFree[0], fileLength);        
         } else {
             console.log('Space not found for fileid: ' + fileId);
+        }
 
+        let perc = ((1 - file[1]/disk.length)*100).toFixed(1);
+        if(!isNaN(perc)){
+            document.querySelector('#completion').textContent = `${perc} %`
         }
         fileId--;
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        if(!run) return;
     }
 }
 

@@ -1,14 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 
     <script src="../getData.js" refer></script>
-    <script src="index.js" refer></script>
+    <script src="index.js" type="module" drefer></script>
 </head>
+
 <body>
-    
+    <div class="toolbar">
+        <button id="start_script">Start</button>
+        <button id="stop_script" disabled>Stop</button>
+        <div class="running-status"></div>
+        <div id="completion"></div>
+    </div>
+
+    <canvas></canvas>
+
+
+    <style>
+        .running-status {
+            height: 20px;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .running-status.running::after {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            aspect-ratio: 1;
+            background: 
+                linear-gradient(white, white) padding-box,
+                linear-gradient(to right, #0156CB, white) border-box;
+            border: 2px solid transparent;
+
+            border-radius: 50%;
+
+            animation: rotate 2s infinite linear;
+        }
+
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .running-status.completed::after {
+            content: '';
+            font-family: icons8_win10;
+            display: inline-block;
+            width: 16px;
+            aspect-ratio: 1;
+            background: lime;
+            border-radius: 50%;
+        }
+
+        .toolbar {
+            display: flex;
+            margin-bottom: 5px;
+            gap: 10px;
+            align-items: center;
+        }
+    </style>
 </body>
+
 </html>
