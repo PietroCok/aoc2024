@@ -2,11 +2,11 @@ async function main() {
     // const data = await getData('input_test.txt');
     const data = await getData('input.txt');
 
-    console.log(data);
+    // console.log(data);
 
     const garden = data.split('\r\n').map(p => p.split(''));
 
-    console.log(garden);
+    // console.log(garden);
 
     // keep track of checked cell
     const alreadyChecked = new Set();
@@ -33,7 +33,7 @@ async function main() {
                 plot = new Map();
                 explore(row_i, col_i, garden[row_i][col_i]);
                 if(plot.size > 0){
-                    console.log(garden[row_i][col_i], plot);
+                    //console.log(garden[row_i][col_i], plot);
                     area = plot.size;
                     perimeter = plot.values().reduce((sum, freeSide) => sum + freeSide, 0)
                     
@@ -41,7 +41,12 @@ async function main() {
                 }
             }
         }
-        console.log(totalPrice);
+        console.log(`Part 1 price: ${totalPrice}`);
+
+
+
+        // re-create areas of part 1 and follow borders
+        // keep track of direction changes
     }
 
     function explore(row, col, value){
