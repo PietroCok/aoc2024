@@ -50,13 +50,8 @@ function allBlinks(stone, blinks){
                 stones[index] = 1;
             } else if(length % 2 == 0){
                 
-                
                 let left = Number((''+stones[index]).slice(0, length/2));
                 let right = Number((''+stones[index]).slice(length/2));
-                
-                // rule: '0000' => 0
-                left = left == 0 ? 0 : left;
-                right = right == 0 ? 0 : right;
                 
                 stones[index] = left;
                 
