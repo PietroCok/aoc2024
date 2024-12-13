@@ -8,12 +8,12 @@ async function main() {
     let tokens_2 = 0;
 
     // parse
-    for(const input of _data){
+    for (const input of _data) {
         let lines = input.split('\r\n')
         let button_A = lines[0].split(': ')[1].split(', ');
         let button_B = lines[1].split(': ')[1].split(', ');
         let target = lines[2].split(': ')[1].split(', ');
-    
+
         let config = {
             A: {
                 x: Number(button_A[0].slice(1)),
@@ -30,58 +30,43 @@ async function main() {
         }
         inputs.push(config);
     }
-    
+
     console.log(inputs);
-    
-    for(let [index, input] of inputs.entries()){
+
+    for (let [index, input] of inputs.entries()) {
         // part 1
-        let _tokens;
-        _tokens = getCheapest_1(input);
-        tokens_1 += _tokens;
+        let _tokens_1, _tokens_2;
+        _tokens_1 = getCheapest(input);
+        tokens_1 += _tokens_1;
 
         // part 2
-        // input.target.x += 10_000_000_000_000;
-        // input.target.y += 10_000_000_000_000;
-        _tokens = getCheapest_2(input);
-        tokens_2 += _tokens;
-        console.log(`Calculated input ${index+1}/${inputs.length}`);
+        input.target.x += 10_000_000_000_000;
+        input.target.y += 10_000_000_000_000;
+        _tokens_2 = getCheapest(input);
+        tokens_2 += _tokens_2;
+        console.log(`Calculated input ${index + 1}/${inputs.length} => ${_tokens_1} | ${_tokens_2}`);
     }
 
     console.log(`Tokens (part 1): ${tokens_1}`);
     console.log(`Tokens (part 2): ${tokens_2}`);
-    // p2
-    // 92804615715615 => too high
-    // 92804585035475
-    // 92801517033164 => too high
-    //
-    
 
-    function getCheapest_1(input){
-        // n, m are integers
-        // m, m are presses for each button
-        // target.x = input.A.x * n + input.B.x * m
-        // target.y = input.A.y * n + input.B.y * m
-        // n <= 100
-        // m <= 100
-        const solutions = [];
-        for(let i = 0; i < 100; i++){
-            for(let j = 0; j < 100; j++){
-                _x = input.A.x * i + input.B.x * j;
-                _y = input.A.y * i + input.B.y * j;
-                if(input.target.x == _x && input.target.y == _y){
-                    solutions.push((i * 3) + j);
-                }
+    function getCheapest(input) {
+        function solve(a1, b1, c1, a2, b2, c2) {
+            const det = a1*b2 - a2*b1;
+            if (det === 0) {
+              return 0;
             }
+           
+            const x = (c1*b2 - c2*b1) / det;
+            const y = (a1*c2 - a2*c1) / det;
+            
+            if(x == Math.floor(x) && y == Math.floor(y)){
+                return x*3 + y;
+            }
+            return 0;
         }
         
-        //console.log(`Solutions: `, solutions);
-        return Math.min(solutions);
-    }
-
-    function getCheapest_2(input){
-        let solution = null;
-
-        return solution;
+        return solve(input.A.x, input.B.x, input.target.x, input.A.y, input.B.y, input.target.y);
     }
 }
 
