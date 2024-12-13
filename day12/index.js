@@ -31,7 +31,7 @@ async function main() {
     for(let i = 0; i < mask.length; i++){
         mask[i] = (new Array(3)).fill('.');
     }
-    mask[1][1] = '#';
+    mask[1][1] = 'O';
 
     isolatePlots();
 
@@ -77,7 +77,7 @@ async function main() {
 
         alreadyChecked.add(row+'|'+col);
         
-        let freeSide = 4;
+        let freeSides = 4;
         for(const [y, x] of adiacentCoords){
             if( row+y >= 0 && row+y < garden.length && col+x >= 0 && col+x < garden[row+y].length){
                 const _value = garden[row+y][col+x];
@@ -85,25 +85,58 @@ async function main() {
                 if(_value == value){
                     explore(row+y, col+x, _value);
                     _mask[y+1][x+1] = 'X';
-                    freeSide--;
+                    freeSides--;
                 }
             }
         }
 
-        // check for corners
         for(const [y, x] of cornersCoords){
             if( row+y >= 0 && row+y < garden.length && col+x >= 0 && col+x < garden[row+y].length){
                 const _value = garden[row+y][col+x];
                 if(_value == value){
-                    _mask[y+1][x+1] = 'X';
+                    // check if it's connected to curren cell to exlude following case
+                    // ..X
+                    // XO.
+                    // XX.
+                    // -1,+1 -> -1,0 0,+1 
+
+                    // X..
+                    // .OX
+                    // .XX
+                    // -1,-1 -> -1,0 0,-1 
+
+                    // .XX
+                    // .OX
+                    // X..
+                    // +1,-1 -> +1,0 0,-1 
+
+                    // XX.
+                    // XO.
+                    // ..X
+                    // +1,+1 -> +1,0 0,+1 
+
+                    // here adiacent cell are already marked
+                    if(_mask[y+1][1] == 'X' || _mask[1][x+1] == 'X'){
+                        _mask[y+1][x+1] = 'X';
+                    } else {
+                        // mark different zone for easier understanding
+                        _mask[y+1][x+1] = 'Z';
+                    }
                 }
             }
         }
 
-        console.log(_mask.map(e => e.join('')).join('\r\n'));
+        // 0-0 0-1 0-2
+        // 1-0 1-1 1-2
+        // 2-0 2-1 2-2
+        let corners = 0;
+        if(_mask[0][0] != 'X' && _mask[0][1] == _mask[1][0]) corners++;
+        if(_mask[0][2] != 'X' && _mask[0][1] == _mask[1][2]) corners++;
+        if(_mask[2][2] != 'X' && _mask[2][1] == _mask[1][2]) corners++;
+        if(_mask[2][0] != 'X' && _mask[2][1] == _mask[1][0]) corners++;
+        console.log(_mask.map(e => e.join('')).join('\r\n'), corners);
         
-
-        plot.set(row+'|'+col, [freeSide, 0]);
+        plot.set(row+'|'+col, [freeSides, corners]);
 
         return;
     }
