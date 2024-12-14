@@ -1,3 +1,5 @@
+import { Canvas } from './canvas.js';
+
 async function main() {
     //const data = await getData('test.txt');
     const data = await getData('input.txt');
@@ -45,6 +47,7 @@ async function main() {
                 if(matrix_str.match('1111111111111')){
                     console.log(i+1);
                     console.log(matrix_str);
+                    return true;
                 }
             } else {
                 console.log(matrix_str);
@@ -111,13 +114,37 @@ async function main() {
 
     // Part 2
     // will print the image and index
+    let time = 0;
     map.resetPosition();
     console.log(map);
     for(let i = 0; i < 10_000; i++){
-        map.moveTime();
-        map.view(i);
+        time = map.moveTime();
+        if(map.view(i)){
+            time = i+1;
+            break;
+        }
     }
-    
+
+    // Visualization for part 2
+    const canvas = new Canvas(map);
+    const targetFrame = time;
+    const framesToShow = 500;
+    const startFrame = targetFrame - framesToShow < 0 ? 0 : targetFrame - framesToShow; // show only last x frames
+    map.resetPosition();
+    map.moveTime(startFrame);
+
+    animateDrones(0);
+
+    function animateDrones(i){
+        if(i >= framesToShow) return;
+        
+        map.moveTime();
+        canvas.draw();
+
+        setTimeout(() => {
+            animateDrones(i+1)
+        }, 10);
+    }
 
     function getPosition(string){
         const regex = /(?<pos>(?<=p=)-*\d+,-*\d+)/gm;
