@@ -6,9 +6,12 @@ async function main() {
     console.log(data);
 
 
-    const maze = data.split('\r\n').map(r => r.split(''));
-    maze.toString = function () {
-        return this.map(r => r.join('')).join('\r\n');
+    let maze = data.split('\r\n').map(r => r.split(''));
+    function toStr(maze){
+        return maze.map(r => r.join('')).join('\r\n');
+    }
+    function reset(maze){
+        maze = data.split('\r\n').map(r => r.split(''));
     }
 
     class Node {
@@ -19,7 +22,7 @@ async function main() {
             this.direction = null;
             this.cost = 0;
             this.setDirection();
-            this.getCost();
+            this.setCost();
         }
         setDirection() {
             if (this.prevNode) {
@@ -39,16 +42,19 @@ async function main() {
                 }
             }
         }
-        getCost() {
+        setCost() {
             if(!this.prevNode){
                 this.cost = 0;
             } else {
                 this.cost = this.prevNode.cost + 1;
+                if(shortestPathNodes.size > 0 && shortestPathNodes.has(`${this.x}|${this.y}`)){
+                    this.cost += 0.001;
+                }
                 if(this.direction != this.prevNode.direction){
+                    // update previous node cose
                     this.cost += 1000;
                 }
             }
-            return this.cost;
         }
     }
     const availableDirections = [
@@ -74,14 +80,42 @@ async function main() {
             }
         }
     }
+
+
+    const shortestPathNodes = new Set();
     //console.log(startNode, target);
     const path = solveDijkstra();
     drawPath(path);
-    console.log(path);
-    console.log(maze.toString());
+    console.log(toStr(maze));
     console.log(`Lowest maze score is: ${path[path.length - 1]?.cost || 'error'}`);
-    // 72432 => high
-    
+
+    for (const node of path) {
+        shortestPathNodes.add(`${node.x}|${node.y}`);
+    }
+
+    let count = 1;
+    while (true) {
+        let same = true;
+        reset(maze);
+        const _path = solveDijkstra();
+
+        for (const node of _path) {
+            if(!shortestPathNodes.has(`${node.x}|${node.y}`)){
+                same = false;
+                shortestPathNodes.add(`${node.x}|${node.y}`);
+            }
+        }
+
+        drawPath(_path);
+        console.log(toStr(maze));
+
+        if(same){
+            console.log(`Shortest paths found: ${count}, total tiles: ${shortestPathNodes.size}`);
+            break;
+        }
+
+        count++;
+    }
     
     function solveDijkstra() {
         let totalNodes = 2;
@@ -116,13 +150,12 @@ async function main() {
             }
             
             // Skip if node has already been visited
-            if (visited.has(`${currentNode.x}|${currentNode.y}`)) {
+            if (visited.has(`${currentNode.x}|${currentNode.y}|${currentNode.direction}`)) {
                 continue;
             }
             
-            console.log(`Checked nodes: ${visited.size}/${totalNodes}`);
-            
-            visited.set(`${currentNode.x},${currentNode.y}`, currentNode);
+            //console.log(`Nodes checked: ${visited.size}/${totalNodes}`, queue.length);
+            visited.set(`${currentNode.x}|${currentNode.y}|${currentNode.direction}`, currentNode);
     
             // Find adjacent nodes
             const adiacentNodes = [];
@@ -131,21 +164,22 @@ async function main() {
                 let _y = currentNode.y + coords[1];
     
                 // Exclude walls
-                if (maze[_y][_x] != '#') {
-                    let _node = new Node(_x, _y, currentNode);
-                    adiacentNodes.push(_node);
-    
-                    // Only add to the queue if the node hasn't been visited
-                    if (!visited.has(`${_node.x}|${_node.y}`)) {
-                        // Add to queue and sort based on cost
-                        queue.push(_node);
-                    } else {
-                        // Update node cost if the new one is smaller
-                        const existingNode = visited.get(`${_node.x}|${_node.y}`);
-                        if (_node.cost < existingNode.cost) {
-                            existingNode.cost = _node.cost;
-                            existingNode.prevNode = currentNode;
-                        }
+                if (maze[_y][_x] == '#') continue;
+                if (currentNode.prevNode && _x == currentNode.prevNode.x && _y == currentNode.prevNode.y) continue;
+                    
+                let _node = new Node(_x, _y, currentNode);
+                adiacentNodes.push(_node);
+
+                // Only add to the queue if the node hasn't been visited
+                if (!visited.has(`${_node.x}|${_node.y}|${_node.direction}`)) {
+                    // Add to queue and sort based on cost
+                    queue.push(_node);
+                } else {
+                    // Update node cost if the new one is smaller
+                    const existingNode = visited.get(`${_node.x}|${_node.y}|${_node.direction}`);
+                    if (_node.direction == existingNode.direction && _node.cost <= existingNode.cost) {
+                        existingNode.cost = _node.cost;
+                        existingNode.prevNode = currentNode;
                     }
                 }
             }
