@@ -7,14 +7,6 @@ async function main() {
 
     class Processor{
         constructor(){
-            this.A = 0;
-            this.B = 0;
-            this.C = 0;
-
-            this.program = [];
-            this.outputBuffer = [];
-            this.instructionPointer = 0;
-
             this.opCodes = {
                 0: this.adv,
                 1: this.bxl,
@@ -26,10 +18,10 @@ async function main() {
                 7: this.cdv
             }
             this.operands = {
-                0: 0,
-                1: 1,
-                2: 2,
-                3: 3,
+                0: BigInt(0),
+                1: BigInt(1),
+                2: BigInt(2),
+                3: BigInt(3),
                 4: 'A',
                 5: 'B',
                 6: 'C'
@@ -37,6 +29,14 @@ async function main() {
         }
 
         init(input){
+            this.program = [];
+            this.outputBuffer = [];
+            this.instructionPointer = 0;
+            
+            this.A = BigInt(0);
+            this.B = BigInt(0);
+            this.C = BigInt(0);
+
             let regs = input.split('\r\n\r\n')[0];
             let prog = input.split('\r\n\r\n')[1].split(': ')[1];
 
@@ -71,7 +71,11 @@ async function main() {
         }
 
         printOutput(){
-            console.log(this.outputBuffer.join(','));
+            console.log(`Output (${this.outputBuffer.length}): ${this.outputBuffer.join(',')}`);
+        }
+
+        fixRegisterA(data){
+            this.init(data);
         }
 
         getOperand(value){
@@ -82,61 +86,78 @@ async function main() {
             }
         }
         // instructions
+        // 0
         adv(operand){
             const value = this.getOperand(operand);
             this.A = this.div(value);
         }
 
+        // 1
         bxl(operand){
-            this.B = this.B ^ operand;
+            this.B = BigInt(this.B) ^ BigInt(operand);
         }
 
+        // 2
         bst(operand){
-            this.B = this.getOperand(operand) % 8
+            this.B = BigInt(this.getOperand(operand)) % BigInt(8);
         }
 
+        // 3
         jnz(operand){
-            console.log(this.A);
-            
-            if(this.A == 0) return;
+            if(this.A == BigInt(0)) return;
             this.instructionPointer = operand;
         }
 
+        // 4
         bxc(operand){
             this.B = this.B ^ this.C;
         }
 
+        // 5
         out(operand){
-            const value = this.getOperand(operand) % 8;
+            const value = BigInt(this.getOperand(operand)) % BigInt(8);
             this.outputBuffer.push(value);
         }
 
+        // 6
         bdv(operand){
             const value = this.getOperand(operand);
             this.B = this.div(value);
         }
 
+        // 7
         cdv(operand){
             const value = this.getOperand(operand);
             this.C = this.div(value);
         }
 
         div(power){
-            const result = Math.floor(this.A / (Math.pow(2, power)))
+            const result = BigInt(this.A) >> BigInt(power);
             return result;
         }
 
     }
 
     // Part 1
-    const procressor = new Processor();
-    procressor.init(data);
-    console.log(procressor);
-    procressor.execProgram();
+    const processor = new Processor();
+    processor.init(data);
+    processor.execProgram();
 
 
     // Part 2
-    
+    processor.fixRegisterA(data);
+
+    window.addEventListener('keypress', (evt) => {
+        if(evt.key == 'Enter'){
+            processor.init(data);
+            processor.A = BigInt(document.querySelector('input').value);
+            console.log(`Running program with register A set to: ${processor.A}`);
+            processor.execProgram();
+        }
+    })
 }
+
+//  35_184_372_088_832 min -> less has not enough digits
+// 281_474_976_710_655 max -> more has too many digits
 
 main();
