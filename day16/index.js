@@ -10,7 +10,7 @@ async function main() {
     function toStr(maze){
         return maze.map(r => r.join('')).join('\r\n');
     }
-    function reset(maze){
+    function reset(){
         maze = data.split('\r\n').map(r => r.split(''));
     }
 
@@ -96,7 +96,7 @@ async function main() {
     let count = 1;
     while (true) {
         let same = true;
-        reset(maze);
+        reset();
         const _path = solveDijkstra();
 
         for (const node of _path) {
