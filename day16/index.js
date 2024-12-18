@@ -1,3 +1,5 @@
+import { Canvas } from './canvas.js';
+
 async function main() {
     // const data = await getData('test.txt');
     // const data = await getData('test_1.txt');
@@ -7,9 +9,6 @@ async function main() {
 
 
     let maze = data.split('\r\n').map(r => r.split(''));
-    function toStr(maze){
-        return maze.map(r => r.join('')).join('\r\n');
-    }
     function reset(){
         maze = data.split('\r\n').map(r => r.split(''));
     }
@@ -81,12 +80,14 @@ async function main() {
         }
     }
 
+    const canvas = new Canvas(maze);
+
 
     const shortestPathNodes = new Set();
+    canvas.draw();
     //console.log(startNode, target);
-    const path = solveDijkstra();
+    const path = await solveDijkstra();
     drawPath(path);
-    console.log(toStr(maze));
     console.log(`Lowest maze score is: ${path[path.length - 1]?.cost || 'error'}`);
 
     for (const node of path) {
@@ -97,7 +98,7 @@ async function main() {
     while (true) {
         let same = true;
         reset();
-        const _path = solveDijkstra();
+        const _path = await solveDijkstra();
 
         for (const node of _path) {
             if(!shortestPathNodes.has(`${node.x}|${node.y}`)){
@@ -107,7 +108,6 @@ async function main() {
         }
 
         drawPath(_path);
-        console.log(toStr(maze));
 
         if(same){
             console.log(`Shortest paths found: ${count}, total tiles: ${shortestPathNodes.size}`);
@@ -117,7 +117,7 @@ async function main() {
         count++;
     }
     
-    function solveDijkstra() {
+    async function solveDijkstra() {
         let totalNodes = 2;
         for (const row of maze) {
             for (const  col of row) {
@@ -132,21 +132,19 @@ async function main() {
         queue.push(startNode);
         
         while (queue.length > 0) {
+            
             // sort node based on cost
             queue.sort((a, b) => a.cost - b.cost);
             let currentNode = queue.shift(); // Get the node with the lowest cost
 
             
+            await new Promise(resolve => setTimeout(resolve, 0));
+            canvas.draw(getPath(currentNode), visited);
+            
             // Check if current node is the target
             if (currentNode.x == target.x && currentNode.y == target.y) {
                 console.log('Maze exit found!');
-                const path = [];
-                let current = currentNode;
-                while (current) {
-                    path.push(current);
-                    current = current.prevNode;
-                }
-                return path.reverse();
+                return getPath(currentNode);
             }
             
             // Skip if node has already been visited
@@ -189,10 +187,22 @@ async function main() {
         return [];
     }
 
-    function drawPath(path) {
-        for (const node of path) {
-            maze[node.y][node.x] = node.direction;
+    function getPath(node){
+        const path = [];
+        let current = node;
+        while (current) {
+            path.push(current);
+            current = current.prevNode;
         }
+        return path.reverse();
+    }
+
+    function drawPath(path) {
+        let _maze = JSON.parse(JSON.stringify(maze))
+        for (const node of path) {
+            _maze[node.y][node.x] = node.direction;
+        }
+        console.log(_maze.map(row => row.join('')).join('\r\n'));
     }
 }
 
