@@ -5,8 +5,8 @@ async function main() {
     console.log(data);
 
 
-    class Processor{
-        constructor(){
+    class Processor {
+        constructor() {
             this.opCodes = {
                 0: this.adv,
                 1: this.bxl,
@@ -28,11 +28,11 @@ async function main() {
             }
         }
 
-        init(input){
+        init(input) {
             this.program = [];
             this.outputBuffer = [];
             this.instructionPointer = 0;
-            
+
             this.A = BigInt(0);
             this.B = BigInt(0);
             this.C = BigInt(0);
@@ -48,18 +48,34 @@ async function main() {
             this.loadProgram(prog);
         }
 
-        loadRegs(a, b, c){
+        loadRegs(a, b, c) {
             this.A = Number(a || this.A);
             this.B = Number(b || this.B);
             this.C = Number(c || this.C);
         }
 
-        loadProgram(string){
-            this.program = string.split(',').map(o => Number(o))
+        loadProgram(string) {
+            this.program = string.split(',').map(o => Number(o));
+            
+            this.showProgram();
         }
 
-        execProgram(){
-            while(this.instructionPointer < this.program.length - 1){
+        showProgram(){
+            // show the actual commands 
+
+            const div = document.querySelector('#code');
+            div.innerHTML = '';
+
+            for(let i = 0; i < this.program.length; i += 2){
+                let li = document.createElement('li');
+                let text = document.createTextNode(`${this.opCodes[this.program[i]].name} ${this.operands[this.program[i+1]]}`);
+                li.appendChild(text)
+                div.appendChild(li);
+            }
+        }
+
+        execProgram() {
+            while (this.instructionPointer < this.program.length - 1) {
                 const instruction = this.program[this.instructionPointer];
                 this.instructionPointer++;
                 const operand = this.program[this.instructionPointer];
@@ -67,19 +83,22 @@ async function main() {
                 // console.log(`Executing: ${instruction}(${operand})`);
                 this.opCodes[instruction].bind(this)(operand);
             }
+
+            console.clear();
+            console.log(`Program (16): ${this.program}`)
             this.printOutput();
         }
 
-        printOutput(){
-            console.log(`Output (${this.outputBuffer.length}): ${this.outputBuffer.join(',')}`);
+        printOutput() {
+            console.log(`Output  (${this.outputBuffer.length}): ${this.outputBuffer.join(',')}`);
         }
 
-        fixRegisterA(data){
+        fixRegisterA(data) {
             this.init(data);
         }
 
-        getOperand(value){
-            if(typeof this.operands[value] == 'string'){
+        getOperand(value) {
+            if (typeof this.operands[value] == 'string') {
                 return this[this.operands[value]];
             } else {
                 return this.operands[value];
@@ -87,51 +106,51 @@ async function main() {
         }
         // instructions
         // 0
-        adv(operand){
+        adv(operand) {
             const value = this.getOperand(operand);
             this.A = this.div(value);
         }
 
         // 1
-        bxl(operand){
+        bxl(operand) {
             this.B = BigInt(this.B) ^ BigInt(operand);
         }
 
         // 2
-        bst(operand){
+        bst(operand) {
             this.B = BigInt(this.getOperand(operand)) % BigInt(8);
         }
 
         // 3
-        jnz(operand){
-            if(this.A == BigInt(0)) return;
+        jnz(operand) {
+            if (this.A == BigInt(0)) return;
             this.instructionPointer = operand;
         }
 
         // 4
-        bxc(operand){
+        bxc(operand) {
             this.B = this.B ^ this.C;
         }
 
         // 5
-        out(operand){
+        out(operand) {
             const value = BigInt(this.getOperand(operand)) % BigInt(8);
             this.outputBuffer.push(value);
         }
 
         // 6
-        bdv(operand){
+        bdv(operand) {
             const value = this.getOperand(operand);
             this.B = this.div(value);
         }
 
         // 7
-        cdv(operand){
+        cdv(operand) {
             const value = this.getOperand(operand);
             this.C = this.div(value);
         }
 
-        div(power){
+        div(power) {
             const result = BigInt(this.A) >> BigInt(power);
             return result;
         }
@@ -148,16 +167,66 @@ async function main() {
     processor.fixRegisterA(data);
 
     window.addEventListener('keypress', (evt) => {
-        if(evt.key == 'Enter'){
+        if (evt.key == 'Enter') {
             processor.init(data);
-            processor.A = BigInt(document.querySelector('input').value);
+            processor.A = BigInt(document.querySelector('#base_10').value);
             console.log(`Running program with register A set to: ${processor.A}`);
             processor.execProgram();
         }
     })
+
+
+    // some interaction
+    // can input values in either base 10 or base 8 (and corrisponding value in the other base is shown)
+    const base_10_input = document.querySelector('#base_10');
+    const base_8_input = document.querySelector('#base_8');
+    const base_2_input = document.querySelector('#base_2');
+
+    base_8_input.addEventListener('keyup', () => updateValues('8'))
+    base_10_input.addEventListener('keyup', () => updateValues('10'))
+    base_2_input.addEventListener('keyup', () => updateValues('2'))
+
+    function updateValues(from) {
+        switch (from) {
+            case '10':
+                base_8_input.value = (Number(base_10_input.value)).toString(8);
+                base_2_input.value = (Number(base_10_input.value)).toString(2);
+                break;
+            case '8':
+                base_10_input.value = parseInt(('0' + base_8_input.value), 8);
+                base_2_input.value = parseInt(('0' + base_8_input.value), 8).toString(2);
+                break;
+            case '2':
+                base_10_input.value = parseInt(base_2_input.value, 2);
+                base_8_input.value = parseInt(base_2_input.value, 2).toString(8);
+                break;
+            
+        }
+    }
+
+
 }
 
-//  35_184_372_088_832 min -> less has not enough digits
-// 281_474_976_710_655 max -> more has too many digits
+// min/max values of register A
+
+// base 10
+//  35_184_372_088_832
+// 281_474_976_710_655
+
+// base 8 (16 digits)
+// 1_000_000_000_000_000
+// 7_777_777_777_777_777
+
+// base 2 (48 bit)
+//   1000000000000000000000000000000000000000000000
+// 111111111111111111111111111111111111111111111111
+
+
+// 1_110_000_000_000_000_000_000_000_000_000_000_000_000_000_111
+
+
+// 101000000000010100100100101100000010001000000111
+
+// 101110000000 => 5,5,3,0
 
 main();

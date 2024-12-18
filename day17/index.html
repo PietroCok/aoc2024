@@ -9,6 +9,38 @@
     <script src="index.js"defer></script>
 </head>
 <body>
-    <input type="number" name="" id="">
+    <label for="base_10">Base 10 <input type="number" name="" id="base_10"></label>
+    
+    <label for="base_8">Base 8 <input type="number" name="" id="base_8"></label>
+
+    <label for="base_2">Base 2 <input type="number" name="" id="base_2"></label>
+    
+
+    <div id="code">
+
+    </div>
+
+    <style>
+        body{
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            width: 500px;
+            gap: 5px;
+            font-family: monospace;
+        }
+
+        input{
+            width: 400px;
+        }
+
+        #code{
+            align-self: flex-start;
+        }
+
+        li{
+            list-style-type: none;
+        }
+    </style>
 </body>
 </html>
