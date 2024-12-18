@@ -154,12 +154,16 @@ async function main() {
     while(!blocked){
         let byte = corrupTMemory(1, falled);
         falled++;
-        path = await solveDijkstra();
-        await new Promise(resolve => setTimeout(resolve, 0));
-        if(path.length <= 0){
-            console.log(`First byte that blocks the exit is (${falled}): ${byte.join(',')}`);
-            break;
+        // search for new path only if last is blocked
+        // removes the need for about 1800 maze solve calls 
+        if(path.find(node => node.x == byte[0] && node.y == byte[1])){
+            path = await solveDijkstra();
+            if(path.length <= 0){
+                console.log(`First byte that blocks the exit is (${falled}): ${byte.join(',')}`);
+                break;
+            }
         }
+        await new Promise(resolve => setTimeout(resolve, 0));
         canvas.draw(path);
     }
 }
