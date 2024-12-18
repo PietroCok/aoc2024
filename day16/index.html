@@ -11,6 +11,19 @@
 </head>
 
 <body>
+
+    <div class="controls">
+        <button id="start">Start</button>
+        <button id="stop" disabled>Stop</button>
+
+        <label id="cost_label" for="cost">Costo rotazione</label>
+        <select id="cost">
+            <option value="1000">1000</option>
+            <option value="0">0</option>
+        </select>
+    </div>
+
+
     <canvas></canvas>
 
     <style>
@@ -21,6 +34,15 @@
             min-height: 100vh;
             margin: 0;
             background: #333;
+            flex-direction: column;
+        }
+
+        .controls{
+            margin-bottom: 10px;
+        }
+
+        #cost_label{
+            color: white;
         }
     </style>
 </body>
