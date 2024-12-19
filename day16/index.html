@@ -16,11 +16,14 @@
         <button id="start">Start</button>
         <button id="stop" disabled>Stop</button>
 
-        <label id="cost_label" for="cost">Costo rotazione</label>
+        <label id="cost_label" class="label" for="cost">Costo rotazione</label>
         <select id="cost">
             <option value="1000">1000</option>
             <option value="0">0</option>
         </select>
+
+        <label for="skip" class="label">Skip to Solution</label><input type="checkbox" id="skip"></button>
+        
     </div>
 
 
@@ -41,8 +44,14 @@
             margin-bottom: 10px;
         }
 
-        #cost_label{
+        .label{
             color: white;
+            margin-left: 10px;
+        }
+
+        input[type='checkbox']{
+            cursor: pointer;
+            transform: translate(0, 2px);
         }
     </style>
 </body>

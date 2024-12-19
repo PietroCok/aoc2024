@@ -12,6 +12,7 @@ async function main() {
     }
 
     let turn_cost = 1000;
+    let skip_solve_animation = false;
 
     class Node {
         constructor(x, y, prevNode) {
@@ -92,6 +93,9 @@ async function main() {
         const path = await solveDijkstra();
         drawPath(path);
         if(!running) return;
+        if(skip_solve_animation){
+            canvas.draw(path);
+        }
         console.log(`Lowest maze score is: ${path[path.length - 1]?.cost || 'error'}`);
 
         for (const node of path) {
@@ -153,8 +157,10 @@ async function main() {
             let currentNode = queue.shift(); // Get the node with the lowest cost
 
 
-            await new Promise(resolve => setTimeout(resolve, 0));
-            canvas.draw(getPath(currentNode), visited);
+            if(!skip_solve_animation){
+                await new Promise(resolve => setTimeout(resolve, 0));
+                canvas.draw(getPath(currentNode), visited);
+            }
 
             // Check if current node is the target
             if (currentNode.x == target.x && currentNode.y == target.y) {
@@ -163,12 +169,12 @@ async function main() {
             }
 
             // Skip if node has already been visited
-            if (visited.has(`${currentNode.x}|${currentNode.y}|${currentNode.direction}`)) {
+            if (visited.has(`${currentNode.x}|${currentNode.y}|${turn_cost > 0 ? currentNode.direction : '-'}`)) {
                 continue;
             }
 
             //console.log(`Nodes checked: ${visited.size}/${totalNodes}`, queue.length);
-            visited.set(`${currentNode.x}|${currentNode.y}|${currentNode.direction}`, currentNode);
+            visited.set(`${currentNode.x}|${currentNode.y}|${turn_cost > 0 ? currentNode.direction : '-'}`, currentNode);
 
             // Find adjacent nodes
             const adiacentNodes = [];
@@ -184,12 +190,12 @@ async function main() {
                 adiacentNodes.push(_node);
 
                 // Only add to the queue if the node hasn't been visited
-                if (!visited.has(`${_node.x}|${_node.y}|${_node.direction}`)) {
+                if (!visited.has(`${_node.x}|${_node.y}|${turn_cost > 0 ? _node.direction : '-'}`)) {
                     // Add to queue and sort based on cost
                     queue.push(_node);
                 } else {
                     // Update node cost if the new one is smaller
-                    const existingNode = visited.get(`${_node.x}|${_node.y}|${_node.direction}`);
+                    const existingNode = visited.get(`${_node.x}|${_node.y}|${turn_cost > 0 ? _node.direction : '-'}`);
                     if (_node.direction == existingNode.direction && _node.cost <= existingNode.cost) {
                         existingNode.cost = _node.cost;
                         existingNode.prevNode = currentNode;
@@ -225,6 +231,7 @@ async function main() {
     const start_button = document.querySelector('#start');
     const stop_button = document.querySelector('#stop');
     const cost_selection = document.querySelector('#cost');
+    const skip = document.querySelector('#skip');
 
     start_button.onclick = _start;
     stop_button.onclick = _stop;
@@ -245,9 +252,12 @@ async function main() {
         stop_button.disabled = true;
     }
 
+    skip.onchange = () => {
+        skip_solve_animation = skip.checked;
+    }
 
     cost_selection.onchange = () => {
-        turn_cost = cost_selection.value;
+        turn_cost = Number(cost_selection.value) || 0;
     }
 }
 
