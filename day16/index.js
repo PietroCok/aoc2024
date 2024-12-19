@@ -164,7 +164,7 @@ async function main() {
 
             // Check if current node is the target
             if (currentNode.x == target.x && currentNode.y == target.y) {
-                console.log('Maze exit found!');
+                //console.log('Maze exit found!');
                 return getPath(currentNode);
             }
 
@@ -204,7 +204,7 @@ async function main() {
             }
         }
 
-        console.log('Path not found!');
+        //console.log('Path not found!');
         return [];
     }
 
