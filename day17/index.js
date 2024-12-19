@@ -84,7 +84,6 @@ async function main() {
                 this.opCodes[instruction].bind(this)(operand);
             }
 
-            console.clear();
             console.log(`Program (16): ${this.program}`)
             this.printOutput();
         }
@@ -94,7 +93,30 @@ async function main() {
         }
 
         fixRegisterA(data) {
-            this.init(data);
+            const start = 202975183831040;
+            const end = 202975183835721;
+            for(let i = start; i <= end; i++){
+                this.init(data);
+                this.A = i;
+                this.execProgram();
+                
+                if(this.program.length == this.outputBuffer.length){
+                    let same = true;
+                    for(const [index, instruction] of this.program.entries()){
+                        if(instruction != this.outputBuffer[index]){
+                            same = false;
+                            break;
+                        }
+                    }
+
+                    if(same){
+                        console.log(`Initial value for A found: ${i}`);
+                        return;
+                    }
+                }
+            }
+            console.log('ops');
+            
         }
 
         getOperand(value) {
@@ -108,7 +130,7 @@ async function main() {
         // 0
         adv(operand) {
             const value = this.getOperand(operand);
-            this.A = this.div(value);
+            this.A = this.shift(value);
         }
 
         // 1
@@ -118,7 +140,7 @@ async function main() {
 
         // 2
         bst(operand) {
-            this.B = BigInt(this.getOperand(operand)) % BigInt(8);
+            this.B = BigInt(this.getOperand(operand)) & BigInt(7);
         }
 
         // 3
@@ -134,24 +156,24 @@ async function main() {
 
         // 5
         out(operand) {
-            const value = BigInt(this.getOperand(operand)) % BigInt(8);
+            const value = BigInt(this.getOperand(operand)) & BigInt(7);
             this.outputBuffer.push(value);
         }
 
         // 6
         bdv(operand) {
             const value = this.getOperand(operand);
-            this.B = this.div(value);
+            this.B = this.shift(value);
         }
 
         // 7
         cdv(operand) {
             const value = this.getOperand(operand);
-            this.C = this.div(value);
+            this.C = this.shift(value);
         }
 
-        div(power) {
-            const result = BigInt(this.A) >> BigInt(power);
+        shift(n) {
+            const result = BigInt(this.A) >> BigInt(n);
             return result;
         }
 
@@ -164,7 +186,7 @@ async function main() {
 
 
     // Part 2
-    processor.fixRegisterA(data);
+    // processor.fixRegisterA(data);
 
     window.addEventListener('keypress', (evt) => {
         if (evt.key == 'Enter') {
@@ -227,6 +249,12 @@ async function main() {
 
 // 101000000000010100100100101100000010001000000111
 
-// 101110000000 => 5,5,3,0
+// 5611532756610131 => 5,4,5,1,5,5,0,3,1,4,4,4,5,5,3,0
+
+// 5611532756611111 => 5,5,5,5,5,5,0,3,1,4,4,4,5,5,3,0
+
+// 5611532756600000
+
+// 5611532756611111
 
 main();
