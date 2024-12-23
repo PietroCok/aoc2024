@@ -1,6 +1,6 @@
 async function main() {
-    // const data = await getData('test.txt');
-    const data = await getData('input.txt');
+    const data = await getData('test.txt');
+    // const data = await getData('input.txt');
 
     console.log(data);
 
@@ -54,143 +54,110 @@ async function main() {
 
 
     // part 1
-    const inputs1 = [];
-    const inputs2 = [];
-    const inputs3 = [];
-    
-    // recupera primo layer (robottino 1)
-    for(const code of codes){
-        inputs1.push(getInputs(numPad, code));
-    }
-    // recupera secondo layer (robottino 2)
-    for(const input1 of inputs1){
-        inputs2.push(getInputs(dirPad, input1));
-    }
-    // recupera terzo layer (umano)
-    for(const input2 of inputs2){
-        inputs3.push(getInputs(dirPad, input2));
-    }
-    
-    let totalComplexity_p1 = 0;
-    for(let i = 0; i < codes.length; i++){
-        totalComplexity_p1 += getCodeComplexity(codes[i], inputs3[i])
-    }
-    console.log(`Par 1: Total codes complexity is: ${totalComplexity_p1}`);
-
-
-    // part 2
-    // maybe it's best to solve like the stones problem (go over everty start digits of every code, and count the total moves required) cache should considere also number of robots left in the sequence
-    const inputs_p2 = [];
-    for(const code of codes){
-        inputs_p2.push(getInputs(numPad, code));
-    }
-
-    const robots = 8;
-    const inputs2_p2 = [];
-    for(const _code of inputs_p2){
-        let _tmp = [..._code]
-        for(let i = 0; i < robots; i++){
-            console.log(i, _tmp.length);
-            _tmp = getInputs(dirPad, _tmp);
+    const codesMoves = {}
+    const robots = 2;
+    for (const code of codes) {
+        let baseInputs = [];
+        let startSimbol = 'A';
+        for (const simbol of code.split('')) {
+            baseInputs.push(getMoves(numPad, startSimbol, simbol));
+            startSimbol = simbol;
         }
-        inputs2_p2.push(_tmp);
-    }
-    console.log(inputs2_p2);
 
-    let totalComplexity_p2 = 0;
-    for(let i = 0; i < codes.length; i++){
-        totalComplexity_p2 += getCodeComplexity(codes[i], inputs2_p2[i])
+        codesMoves[code] = [];
+        // get all moves for the base inputs
+        for (const moves of baseInputs) {
+            for (const move of moves) {
+                codesMoves[code] = [...codesMoves[code], ...getMoves(dirPad, 'A', move, robots)];
+            }
+        }
     }
-    console.log(`Par 2: Total codes complexity is: ${totalComplexity_p2}`);
+    console.log(codesMoves);
+
+
+
+    let totalComplexity = 0;
+    for (const [code, moves] of Object.entries(codesMoves)) {
+        totalComplexity += getCodeComplexity(code, moves);
+    }
+    console.log(`Par 1: Total codes complexity is: ${totalComplexity}`);
+
 
 
     // calculate code complexity
-    function getCodeComplexity(code, inputs){
+    function getCodeComplexity(code, inputs) {
         const numericPart = Number(code.slice(0, 3));
-        console.log(code, inputs.length, numericPart);
-        return inputs.length * numericPart;
-    }
-
-
-    // gets move sequence on selected pad given a code
-    function getInputs(pad, code){
-        let lastPosition = getSimbolPos(pad, 'A');
-        let _inputs = []
-        for(const simbol of code){
-            const input = getInput(pad, simbol, lastPosition);
-            // update last position for next iteration
-            lastPosition = input.pos;
-            _inputs = [..._inputs, ...input.moves]
-        }
-        return _inputs;
-    }
-
-    // get moves to reach selected simbol in the provided pad
-    function getInput(pad, simbol, startPos){
-        if(cache.has(`${pad.length}|${startPos.x}-${startPos.y}|${simbol}`)) 
-            return JSON.parse(cache.get(`${pad.length}|${startPos.x}-${startPos.y}|${simbol}`));
-
-        const simbolPos = getSimbolPos(pad, simbol);
-        if(!simbolPos) return [];
-        const moves = getMoves(pad, startPos, simbolPos);
-        cache.set((`${pad.length}|${startPos.x}-${startPos.y}|${simbol}`), JSON.stringify({pos: simbolPos, moves: moves}));
-        return {
-            pos: simbolPos, 
-            moves: moves
-        };
+        console.log(`${code}: ${inputs?.length} => ${inputs?.length * numericPart}`);
+        return inputs?.length * numericPart | 0;
     }
 
     // get move list from one position to another
-    function getMoves(pad, startPos, simbolPos){
+    function getMoves(pad, startSimbol, endSimbol, level = 0) {
+        const startSimbolPos = getSimbolPos(pad, startSimbol);
+        const endSimbolPos = getSimbolPos(pad, endSimbol);
         let moves = [];
         const h_moves = [];
         const v_moves = [];
-        let diffX = simbolPos.x - startPos.x;
-        let diffY = simbolPos.y - startPos.y;
+        let diffX = endSimbolPos.x - startSimbolPos.x;
+        let diffY = endSimbolPos.y - startSimbolPos.y;
 
         let horiz = '>';
         let vert = '^';
-        if(diffX < 0)horiz = '<';
-        if(diffY > 0)vert = 'v';
+        if (diffX < 0) horiz = '<';
+        if (diffY > 0) vert = 'v';
         let _diffX = Math.abs(diffX);
         let _diffY = Math.abs(diffY);
-        while(_diffX > 0){
+        while (_diffX > 0) {
             h_moves.push(horiz);
             _diffX--;
         }
-        while(_diffY > 0){
+        while (_diffY > 0) {
             v_moves.push(vert);
             _diffY--;
         }
-        
-        if(diffX > 0){
+
+        if (diffX > 0) {
             moves = [...v_moves, ...h_moves]
         } else {
             moves = [...h_moves, ...v_moves]
         }
 
-        if(!checkPathBounds(pad, startPos, moves)){
+        if (!checkPathBounds(pad, startSimbolPos, moves)) {
             moves.reverse();
         }
 
         moves.push('A');
+
+        // if more robot are present get the correct move for the next one
+        level -= 1;
+        if (level > 0) {
+            let _moves = [];
+            let _startSimbol = 'A';
+            for (const nextSimbol of moves) {
+                _moves = [..._moves, ...getMoves(pad, _startSimbol, nextSimbol, level)];
+                _startSimbol = nextSimbol;
+            }
+            // console.log(`\nFrom ${startSimbol} to ${endSimbol} - level ${level}`);
+            // console.log(moves, _moves);
+            return _moves;
+        }
         return moves;
     }
 
 
 
-    function checkPathBounds(pad, startPos, path){
+    function checkPathBounds(pad, startPos, path) {
         let currentPos = {
             x: startPos.x,
-            y:startPos.y,
-            move: function([x, y]){
+            y: startPos.y,
+            move: function ([x, y]) {
                 this.x += x;
                 this.y += y;
             }
         };
-        for(const move of path){
+        for (const move of path) {
             currentPos.move(directions[move]);
-            if(pad[currentPos.y][currentPos.x] == '.'){
+            if (pad[currentPos.y][currentPos.x] == '.') {
                 return false;
             }
         }
@@ -198,11 +165,11 @@ async function main() {
     }
 
     // get simbol position in a particular pad
-    function getSimbolPos(pad, simbol){
+    function getSimbolPos(pad, simbol) {
         let simbolPos = null;
-        for(const [row_index, row] of pad.entries()){
-            for(const [col_index, col] of row.entries()){
-                if(col == simbol){
+        for (const [row_index, row] of pad.entries()) {
+            for (const [col_index, col] of row.entries()) {
+                if (col == simbol) {
                     simbolPos = {
                         x: col_index,
                         y: row_index
@@ -210,9 +177,9 @@ async function main() {
                     break;
                 }
             }
-            if(simbolPos) break;
+            if (simbolPos) break;
         }
-        if(!simbolPos) console.log(`Simbol ${simbol} not found in provided pad!`);
+        if (!simbolPos) console.log(`Simbol ${simbol} not found in provided pad!`);
         return simbolPos;
     }
 }
